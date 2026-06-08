@@ -416,9 +416,11 @@ function renderAset(data){
       <td><span class="badge ${BADGE[a.jenis]||'badge-lainnya'}">${LABEL[a.jenis]||a.jenis}</span></td>
       <td style="color:var(--muted)">${a.lot.toLocaleString('id-ID')} ${a.jenis==='saham'?'lot':(a.jenis==='saham_us'?'lembar':'unit')}</td>
       <td>
-  ${a.jenis === 'saham_us' && a.kurs ? 
-    `<strong style="color:var(--text)">$${(a.hargaBeli / a.kurs).toFixed(1)}</strong><br><span style="font-size:11px;color:var(--hint)">Kurs: Rp${a.kurs.toLocaleString('id-ID')}</span>` 
-    : `${fmtShort(a.hargaBeli)}`
+        ${a.jenis === 'saham_us' && a.kurs ? 
+          `<strong style="color:var(--text)">$${(a.hargaBeli / a.kurs).toFixed(1)}</strong><br><span style="font-size:11px;color:var(--hint)">Kurs: Rp${a.kurs.toLocaleString('id-ID')}</span>` 
+          : `${fmtShort(a.hargaBeli)}`
+        }
+      </td>
   }
 </td>
       <td>${fmtShort(a.hargaSkrg)}<br><span style="font-size:10px;color:var(--hint)">${upd}</span></td>
@@ -470,9 +472,10 @@ async function simpanAset(){
   }
 
   const multiplier=jenis==='saham'?100:1;
-  try{
+ try{
     await fetch(`${API}/api/aset`,{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({nama,kode,jenis,lot,hargaBeli,hargaSkrg:hargaSkrg||hargaBeli,multiplier,tanggal,updatedAt:new Date()})});
+    
     document.getElementById('a-nama').value='';
     document.getElementById('a-kode').value='';
     document.getElementById('a-lot').value='';
