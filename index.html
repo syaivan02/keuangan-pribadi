@@ -208,12 +208,12 @@ tr:hover td{background:var(--bg)}
     <div class="page-title">Portofolio</div>
     <div class="page-sub">Saham, reksa dana, emas, dan aset investasi lainnya</div>
 
-    <div class="grid-3" style="margin-bottom:1.5rem">
+    <div class="grid-4" style="margin-bottom:1.5rem">
+      <div class="metric"><div class="lbl">Total Modal</div><div class="val" id="a-modal">-</div></div>
       <div class="metric"><div class="lbl">Total Nilai</div><div class="val" id="a-total">-</div></div>
       <div class="metric"><div class="lbl">Untung / Rugi</div><div class="val" id="a-pnl">-</div></div>
       <div class="metric"><div class="lbl">Return</div><div class="val" id="a-pct">-</div></div>
     </div>
-
     <div class="card">
       <div class="card-title"><i class="ti ti-plus"></i> Tambah Aset</div>
       <div class="form-row c2">
@@ -402,6 +402,7 @@ function renderAset(data){
   const tbody=document.getElementById('a-tbody');
   if(!data.length){
     tbody.innerHTML='<tr><td colspan="8" class="empty">Belum ada aset. Tambahkan di atas.</td></tr>';
+    document.getElementById('a-modal').textContent=fmtShort(totalModal);
     document.getElementById('a-total').textContent='Rp 0';
     document.getElementById('a-pnl').textContent='Rp 0';
     document.getElementById('a-pct').textContent='0%';
