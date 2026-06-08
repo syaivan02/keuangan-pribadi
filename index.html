@@ -40,6 +40,7 @@ h1,h2,h3{font-family:'Syne',sans-serif}
 .page-sub{color:var(--muted);font-size:13px;margin-bottom:1.5rem}
 
 .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem}
 .grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem}
 .metric{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem 1.5rem}
 .metric .lbl{font-size:12px;color:var(--muted);margin-bottom:.5rem;font-weight:500;text-transform:uppercase;letter-spacing:.5px}
@@ -120,7 +121,7 @@ tr:hover td{background:var(--bg)}
   .logo,.nav-item span,.sidebar-footer{display:none}
   .nav-item{justify-content:center}
   .main{margin-left:60px;padding:1rem}
-  .grid-3{grid-template-columns:1fr}
+  .grid-3, .grid-4{grid-template-columns:1fr}
   .form-row.c3,.form-row.c4{grid-template-columns:1fr 1fr}
 }
 </style>
@@ -143,10 +144,11 @@ tr:hover td{background:var(--bg)}
   <div class="page active" id="page-dashboard">
     <div class="page-title">Dashboard</div>
     <div class="page-sub" id="dash-bulan">Memuat data...</div>
-    <div class="grid-3">
+   <div class="grid-4">
       <div class="metric"><div class="lbl">Total Aset</div><div class="val" id="d-total-aset">-</div><div class="sub">Semua portofolio</div></div>
       <div class="metric"><div class="lbl">Pemasukan Bulan Ini</div><div class="val pos" id="d-in">-</div></div>
       <div class="metric"><div class="lbl">Pengeluaran Bulan Ini</div><div class="val neg" id="d-out">-</div></div>
+      <div class="metric"><div class="lbl">Sisa Saldo Bulan Ini</div><div class="val" id="d-net">-</div></div>
     </div>
     <div class="grid-2">
       <div class="card">
@@ -481,10 +483,18 @@ async function loadDashboard(){
     const sumIn=txData.filter(t=>t.type==='in').reduce((s,t)=>s+t.jumlah,0);
     const sumOut=txData.filter(t=>t.type==='out').reduce((s,t)=>s+t.jumlah,0);
     const totalAset=asetData.reduce((s,a)=>s+a.lot*(a.multiplier||1)*a.hargaSkrg,0);
+    
+    // 1. HITUNG SISA SALDO (Pemasukan - Pengeluaran)
+    const netSaldo = sumIn - sumOut;
 
     document.getElementById('d-total-aset').textContent=fmtShort(totalAset);
     document.getElementById('d-in').textContent=fmtShort(sumIn);
     document.getElementById('d-out').textContent=fmtShort(sumOut);
+
+    // 2. TAMPILKAN KE HTML DAN BERI WARNA DINAMIS
+    const netEl = document.getElementById('d-net');
+    netEl.textContent = (netSaldo >= 0 ? '+' : '') + fmtShort(netSaldo);
+    netEl.className = 'val ' + (netSaldo >= 0 ? 'pos' : 'neg'); // Hijau jika plus, merah jika minus
 
     const outTx=txData.filter(t=>t.type==='out');
     const catTotals={};
@@ -505,13 +515,7 @@ async function loadDashboard(){
         </div>`;
       }).join('')
       :'<div class="empty">Belum ada transaksi bulan ini.</div>';
-  }catch(e){console.error(e)}
-}
-
-document.getElementById('t-tgl').valueAsDate=new Date();
-document.getElementById('a-tgl').valueAsDate=new Date();
-buildKatSelect();
-loadDashboard();
+  }catch(e){console.error(e)}}
 </script>
 </body>
 </html>
