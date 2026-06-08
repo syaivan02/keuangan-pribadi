@@ -220,19 +220,24 @@ tr:hover td{background:var(--bg)}
         <div><label>Nama aset</label><input id="a-nama" placeholder="Mis: Bank BCA, Schroder Dana Prestasi"></div>
         <div><label>Kode / ticker (opsional)</label><input id="a-kode" placeholder="Mis: BBCA, SDIT"></div>
       </div>
-      <div class="form-row c4">
+      <div class="form-row c3">
         <div><label>Jenis</label>
-          <select id="a-jenis">
-            <option value="saham">Saham</option>
+          <select id="a-jenis" onchange="cekJenisAset()">
+            <option value="saham">Saham (Indonesia)</option>
+            <option value="saham_us">Saham AS</option>
             <option value="reksadana">Reksa Dana</option>
             <option value="emas">Emas</option>
             <option value="kripto">Kripto</option>
             <option value="lainnya">Lainnya</option>
           </select>
         </div>
-        <div><label>Lot / Unit / Gram</label><input id="a-lot" type="number" min="0" step="any" placeholder="0"></div>
-        <div><label>Harga beli / unit (Rp)</label><input id="a-hbeli" type="number" min="0" placeholder="0"></div>
-        <div><label>Harga sekarang (Rp)</label><input id="a-hskrg" type="number" min="0" placeholder="Sama dengan beli"></div>
+        <div><label id="lbl-lot">Lot / Unit / Gram</label><input id="a-lot" type="number" min="0" step="any" placeholder="0"></div>
+        <div id="box-kurs" style="display:none"><label>Kurs USD ke IDR (Rp)</label><input id="a-kurs" type="number" min="0" value="16000" placeholder="Mis: 16000"></div>
+      </div>
+
+      <div class="form-row c2">
+        <div><label id="lbl-hbeli">Harga beli / unit (Rp)</label><input id="a-hbeli" type="number" min="0" placeholder="0"></div>
+        <div><label id="lbl-hskrg">Harga sekarang (Rp)</label><input id="a-hskrg" type="number" min="0" placeholder="Sama dengan beli"></div>
       </div>
       <div class="form-row c2">
         <div><label>Tanggal beli</label><input id="a-tgl" type="date"></div>
@@ -270,8 +275,8 @@ const CATS = {
   in: ['Gaji','Freelance','Investasi','Bisnis','Hadiah','Lainnya'],
   out: ['Makanan','Transportasi','Belanja','Hiburan','Tagihan','Kesehatan','Pendidikan','Investasi','Lainnya']
 };
-const BADGE = {saham:'badge-saham',reksadana:'badge-reksadana',emas:'badge-emas',kripto:'badge-kripto',lainnya:'badge-lainnya'};
-const LABEL = {saham:'Saham',reksadana:'Reksa Dana',emas:'Emas',kripto:'Kripto',lainnya:'Lainnya'};
+const BADGE = {saham:'badge-saham',saham_us:'badge-kripto',reksadana:'badge-reksadana',emas:'badge-emas',kripto:'badge-kripto',lainnya:'badge-lainnya'};
+const LABEL = {saham:'Saham IDX',saham_us:'Saham AS',reksadana:'Reksa Dana',emas:'Emas',kripto:'Kripto',lainnya:'Lainnya'};
 const MONTHS = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 
 let txType = 'in';
@@ -297,7 +302,25 @@ function setType(t){
   document.getElementById('btn-type-out').className='type-btn'+(t==='out'?' out':'');
   buildKatSelect();
 }
+function cekJenisAset() {
+  const jenis = document.getElementById('a-jenis').value;
+  const boxKurs = document.getElementById('box-kurs');
+  const lblLot = document.getElementById('lbl-lot');
+  const lblHbeli = document.getElementById('lbl-hbeli');
+  const lblHskrg = document.getElementById('lbl-hskrg');
 
+  if (jenis === 'saham_us') {
+    boxKurs.style.display = 'block';
+    lblLot.textContent = 'Jumlah Lembar (Shares)';
+    lblHbeli.textContent = 'Harga beli / lembar ($ USD)';
+    lblHskrg.textContent = 'Harga sekarang ($ USD)';
+  } else {
+    boxKurs.style.display = 'none';
+    lblLot.textContent = jenis === 'saham' ? 'Jumlah Lot' : 'Lot / Unit / Gram';
+    lblHbeli.textContent = 'Harga beli / unit (Rp)';
+    lblHskrg.textContent = 'Harga sekarang (Rp)';
+  }
+}
 function buildKatSelect(){
   const s=document.getElementById('t-kat');
   s.innerHTML=CATS[txType].map(c=>`<option>${c}</option>`).join('');
@@ -391,7 +414,7 @@ function renderAset(data){
     return `<tr>
       <td><strong style="font-weight:600">${a.nama}</strong>${a.kode?'<br><span style="font-size:11px;color:var(--hint)">'+a.kode+'</span>':''}</td>
       <td><span class="badge ${BADGE[a.jenis]||'badge-lainnya'}">${LABEL[a.jenis]||a.jenis}</span></td>
-      <td style="color:var(--muted)">${a.lot.toLocaleString('id-ID')} ${a.jenis==='saham'?'lot':'unit'}</td>
+      <td style="color:var(--muted)">${a.lot.toLocaleString('id-ID')} ${a.jenis==='saham'?'lot':(a.jenis==='saham_us'?'lembar':'unit')}</td>
       <td style="color:var(--muted)">${fmtShort(a.hargaBeli)}</td>
       <td>${fmtShort(a.hargaSkrg)}<br><span style="font-size:10px;color:var(--hint)">${upd}</span></td>
       <td><strong style="font-weight:600">${fmtShort(nilai)}</strong></td>
@@ -413,7 +436,7 @@ function renderAset(data){
   const byJenis={};
   data.forEach(a=>{const v=a.lot*(a.multiplier||1)*a.hargaSkrg;byJenis[a.jenis]=(byJenis[a.jenis]||0)+v;});
   const total=Object.values(byJenis).reduce((s,v)=>s+v,0);
-  const COLORS={saham:'#2563eb',reksadana:'#1D9E75',emas:'#b45309',kripto:'#6d28d9',lainnya:'#6b7280'};
+  const COLORS={saham:'#2563eb',saham_us:'#6d28d9',reksadana:'#1D9E75',emas:'#b45309',kripto:'#6d28d9',lainnya:'#6b7280'};
   document.getElementById('a-alokasi').innerHTML=Object.entries(byJenis).sort((a,b)=>b[1]-a[1]).map(([j,v])=>
     `<div class="bar-row">
       <div class="bar-label">${LABEL[j]||j}</div>
@@ -427,11 +450,20 @@ async function simpanAset(){
   const nama=document.getElementById('a-nama').value.trim();
   const kode=document.getElementById('a-kode').value.trim();
   const jenis=document.getElementById('a-jenis').value;
-  const lot=parseFloat(document.getElementById('a-lot').value);
-  const hargaBeli=parseFloat(document.getElementById('a-hbeli').value);
-  const hargaSkrg=parseFloat(document.getElementById('a-hskrg').value||document.getElementById('a-hbeli').value);
+ let lot=parseFloat(document.getElementById('a-lot').value);
+  let hargaBeli=parseFloat(document.getElementById('a-hbeli').value);
+  let hargaSkrg=parseFloat(document.getElementById('a-hskrg').value||document.getElementById('a-hbeli').value);
   const tanggal=document.getElementById('a-tgl').value;
+
   if(!nama||!lot||!hargaBeli){showToast('Isi nama, jumlah, dan harga beli ya!');return}
+
+  // KONVERSI DOLAR KE RUPIAH KHUSUS SAHAM AS
+  if (jenis === 'saham_us') {
+    const kurs = parseFloat(document.getElementById('a-kurs').value) || 16000;
+    hargaBeli = hargaBeli * kurs;
+    hargaSkrg = hargaSkrg * kurs;
+  }
+
   const multiplier=jenis==='saham'?100:1;
   try{
     await fetch(`${API}/api/aset`,{method:'POST',headers:{'Content-Type':'application/json'},
