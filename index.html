@@ -496,21 +496,20 @@ async function hapusAset(id){
 }
 
 async function showUpdateHarga(){
-  const res=await fetch(`${API}/api/aset`);
-  const data=await res.json();
-  if(!data.length){showToast('Belum ada aset.');return}
-  const list=data.map((a,i)=>`${i+1}. ${a.nama}${a.kode?' ('+a.kode+')':''}`).join('\n');
-  const input=prompt('Aset mana yang ingin diupdate harganya?\n\n'+list+'\n\nKetik nama atau nomor:');
-  if(!input)return;
-  const idx=isNaN(input)?data.findIndex(a=>a.nama.toLowerCase().includes(input.toLowerCase())):parseInt(input)-1;
-  if(idx<0||idx>=data.length){showToast('Aset tidak ditemukan.');return}
-  const harga=parseFloat(prompt(`Harga sekarang untuk ${data[idx].nama} (per unit/lembar Rp):`));
-  if(!harga||isNaN(harga))return;
-  await fetch(`${API}/api/aset/${data[idx]._id}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({hargaSkrg:harga,updatedAt:new Date()})});
-  showToast('Harga diperbarui!');
-  loadAset();
+  showToast('Mengambil harga terbaru...');
+  try {
+    const res = await fetch(`${API}/api/update-harga`);
+    const data = await res.json();
+    if(data.ok){
+      showToast('Harga berhasil diperbarui!');
+      loadAset();
+    } else {
+      showToast('Gagal update harga.');
+    }
+  } catch(e) {
+    showToast('Gagal update harga.');
+  }
 }
-
 async function loadDashboard(){
   const now=new Date();
   document.getElementById('dash-bulan').textContent=MONTHS[now.getMonth()]+' '+now.getFullYear();
