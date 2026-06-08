@@ -401,7 +401,6 @@ function renderAset(data){
     document.getElementById('a-pct').textContent='0%';
     document.getElementById('a-alokasi').innerHTML='<div class="empty">Belum ada data.</div>';
     return;
-  }
  let totalModal=0,totalNilai=0;
   tbody.innerHTML=data.map(a=>{
     const mult = a.jenis === 'saham' ? 100 : 1; 
