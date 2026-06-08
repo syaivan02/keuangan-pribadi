@@ -10,66 +10,7 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#f7f6f2;--surface:#ffffff;--border:#e8e6e0;function renderAset(data) {
-  const tbody = document.getElementById('a-tbody');
-  if (!data.length) {
-    tbody.innerHTML = '<tr><td colspan="8" class="empty">Belum ada aset. Tambahkan di atas.</td></tr>';
-    document.getElementById('a-total').textContent = 'Rp 0';
-    document.getElementById('a-pnl').textContent = 'Rp 0';
-    document.getElementById('a-pct').textContent = '0%';
-    document.getElementById('a-alokasi').innerHTML = '<div class="empty">Belum ada data.</div>';
-    return;
-  }
-
-  let totalModal = 0, totalNilai = 0;
-  tbody.innerHTML = data.map(a => {
-    const mult = a.jenis === 'saham' ? 100 : 1;
-    const modal = a.lot * mult * a.hargaBeli;
-    const nilai = a.lot * mult * a.hargaSkrg;
-    const pnl = nilai - modal;
-    const pct = modal > 0 ? ((pnl / modal) * 100) : 0;
-    totalModal += modal; totalNilai += nilai;
-    const upd = a.updatedAt ? new Date(a.updatedAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' }) : '';
-    
-    return `<tr>
-      <td><strong style="font-weight:600">${a.nama}</strong>${a.kode ? '<br><span style="font-size:11px;color:var(--hint)">' + a.kode + '</span>' : ''}</td>
-      <td><span class="badge ${BADGE[a.jenis] || 'badge-lainnya'}">${LABEL[a.jenis] || a.jenis}</span></td>
-      <td style="color:var(--muted)">${a.lot.toLocaleString('id-ID')} ${a.jenis === 'saham' ? 'lot' : (a.jenis === 'saham_us' ? 'lembar' : 'unit')}</td>
-      <td>
-        ${a.jenis === 'saham_us' && a.kurs ? 
-          `<strong style="color:var(--text)">$${(a.hargaBeli / a.kurs).toFixed(1)}</strong><br><span style="font-size:11px;color:var(--hint)">Kurs: Rp${a.kurs.toLocaleString('id-ID')}</span>` 
-          : `${fmtShort(a.hargaBeli)}`
-        }
-      </td>
-      <td>${fmtShort(a.hargaSkrg)}<br><span style="font-size:10px;color:var(--hint)">${upd}</span></td>
-      <td><strong style="font-weight:600">${fmtShort(nilai)}</strong></td>
-      <td class="${pnl >= 0 ? 'pnl-pos' : 'pnl-neg'}">${pnl >= 0 ? '+' : ''}${pct.toFixed(1)}%<br><span style="font-size:11px">${pnl >= 0 ? '+' : ''}${fmtShort(pnl)}</span></td>
-      <td><button class="btn-del" onclick="hapusAset('${a._id}')"><i class="ti ti-trash"></i></button></td>
-    </tr>`;
-  }).join('');
-
-  const totalPnl = totalNilai - totalModal;
-  const totalPct = totalModal > 0 ? ((totalPnl / totalModal) * 100) : 0;
-  document.getElementById('a-total').textContent = fmtShort(totalNilai);
-  const pnlEl = document.getElementById('a-pnl');
-  pnlEl.textContent = (totalPnl >= 0 ? '+' : '') + fmtShort(totalPnl);
-  pnlEl.className = 'val ' + (totalPnl >= 0 ? 'pos' : 'neg');
-  const pctEl = document.getElementById('a-pct');
-  pctEl.textContent = (totalPct >= 0 ? '+' : '') + totalPct.toFixed(1) + '%';
-  pctEl.className = 'val ' + (totalPct >= 0 ? 'pos' : 'neg');
-
-  const byJenis = {};
-  data.forEach(a => { const v = a.lot * (a.multiplier || 1) * a.hargaSkrg; byJenis[a.jenis] = (byJenis[a.jenis] || 0) + v; });
-  const total = Object.values(byJenis).reduce((s, v) => s + v, 0);
-  const COLORS = { saham: '#2563eb', saham_us: '#6d28d9', reksadana: '#1D9E75', emas: '#b45309', kripto: '#6d28d9', lainnya: '#6b7280' };
-  document.getElementById('a-alokasi').innerHTML = Object.entries(byJenis).sort((a, b) => b[1] - a[1]).map(([j, v]) =>
-    `<div class="bar-row">
-      <div class="bar-label">${LABEL[j] || j}</div>
-      <div class="bar-bg"><div class="bar-fill" style="width:${Math.round(v / total * 100)}%;background:${COLORS[j]}"></div></div>
-      <div class="bar-val">${((v / total) * 100).toFixed(1)}% · ${fmtShort(v)}</div>
-    </div>`
-  ).join('');
-}
+  --bg:#f7f6f2;--surface:#ffffff;--border:#e8e6e0;
   --text:#1a1916;--muted:#888580;--hint:#b5b2ac;
   --green:#1D9E75;--green-bg:#e1f5ee;
   --red:#d94f4f;--red-bg:#fdf0f0;
@@ -451,66 +392,36 @@ async function loadAset(){
   }catch(e){document.getElementById('a-tbody').innerHTML='<tr><td colspan="8" class="empty">Gagal memuat data.</td></tr>'}
 }
 
-function renderAset(data) {
-  const tbody = document.getElementById('a-tbody');
-  if (!data.length) {
-    tbody.innerHTML = '<tr><td colspan="8" class="empty">Belum ada aset. Tambahkan di atas.</td></tr>';
-    document.getElementById('a-total').textContent = 'Rp 0';
-    document.getElementById('a-pnl').textContent = 'Rp 0';
-    document.getElementById('a-pct').textContent = '0%';
-    document.getElementById('a-alokasi').innerHTML = '<div class="empty">Belum ada data.</div>';
+function renderAset(data){
+  const tbody=document.getElementById('a-tbody');
+  if(!data.length){
+    tbody.innerHTML='<tr><td colspan="8" class="empty">Belum ada aset. Tambahkan di atas.</td></tr>';
+    document.getElementById('a-total').textContent='Rp 0';
+    document.getElementById('a-pnl').textContent='Rp 0';
+    document.getElementById('a-pct').textContent='0%';
+    document.getElementById('a-alokasi').innerHTML='<div class="empty">Belum ada data.</div>';
     return;
   }
-
-  let totalModal = 0, totalNilai = 0;
-  tbody.innerHTML = data.map(a => {
-    const mult = a.jenis === 'saham' ? 100 : 1;
-    const modal = a.lot * mult * a.hargaBeli;
-    const nilai = a.lot * mult * a.hargaSkrg;
-    const pnl = nilai - modal;
-    const pct = modal > 0 ? ((pnl / modal) * 100) : 0;
-    totalModal += modal; totalNilai += nilai;
-    const upd = a.updatedAt ? new Date(a.updatedAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' }) : '';
-    
+  let totalModal=0,totalNilai=0;
+  tbody.innerHTML=data.map(a=>{
+    const mult=a.multiplier||1;
+    const modal=a.lot*mult*a.hargaBeli;
+    const nilai=a.lot*mult*a.hargaSkrg;
+    const pnl=nilai-modal;
+    const pct=modal>0?((pnl/modal)*100):0;
+    totalModal+=modal;totalNilai+=nilai;
+    const upd=a.updatedAt?new Date(a.updatedAt).toLocaleDateString('id-ID',{day:'2-digit',month:'short'}):'';
     return `<tr>
-      <td><strong style="font-weight:600">${a.nama}</strong>${a.kode ? '<br><span style="font-size:11px;color:var(--hint)">' + a.kode + '</span>' : ''}</td>
-      <td><span class="badge ${BADGE[a.jenis] || 'badge-lainnya'}">${LABEL[a.jenis] || a.jenis}</span></td>
-      <td style="color:var(--muted)">${a.lot.toLocaleString('id-ID')} ${a.jenis === 'saham' ? 'lot' : (a.jenis === 'saham_us' ? 'lembar' : 'unit')}</td>
-      <td>
-        ${a.jenis === 'saham_us' && a.kurs ? 
-          `<strong style="color:var(--text)">$${(a.hargaBeli / a.kurs).toFixed(1)}</strong><br><span style="font-size:11px;color:var(--hint)">Kurs: Rp${a.kurs.toLocaleString('id-ID')}</span>` 
-          : `${fmtShort(a.hargaBeli)}`
-        }
-      </td>
+      <td><strong style="font-weight:600">${a.nama}</strong>${a.kode?'<br><span style="font-size:11px;color:var(--hint)">'+a.kode+'</span>':''}</td>
+      <td><span class="badge ${BADGE[a.jenis]||'badge-lainnya'}">${LABEL[a.jenis]||a.jenis}</span></td>
+      <td style="color:var(--muted)">${a.lot.toLocaleString('id-ID')} ${a.jenis==='saham'?'lot':(a.jenis==='saham_us'?'lembar':'unit')}</td>
+      <td style="color:var(--muted)">${fmtShort(a.hargaBeli)}</td>
       <td>${fmtShort(a.hargaSkrg)}<br><span style="font-size:10px;color:var(--hint)">${upd}</span></td>
       <td><strong style="font-weight:600">${fmtShort(nilai)}</strong></td>
-      <td class="${pnl >= 0 ? 'pnl-pos' : 'pnl-neg'}">${pnl >= 0 ? '+' : ''}${pct.toFixed(1)}%<br><span style="font-size:11px">${pnl >= 0 ? '+' : ''}${fmtShort(pnl)}</span></td>
+      <td class="${pnl>=0?'pnl-pos':'pnl-neg'}">${pnl>=0?'+':''}${pct.toFixed(1)}%<br><span style="font-size:11px">${pnl>=0?'+':''}${fmtShort(pnl)}</span></td>
       <td><button class="btn-del" onclick="hapusAset('${a._id}')"><i class="ti ti-trash"></i></button></td>
     </tr>`;
   }).join('');
-
-  const totalPnl = totalNilai - totalModal;
-  const totalPct = totalModal > 0 ? ((totalPnl / totalModal) * 100) : 0;
-  document.getElementById('a-total').textContent = fmtShort(totalNilai);
-  const pnlEl = document.getElementById('a-pnl');
-  pnlEl.textContent = (totalPnl >= 0 ? '+' : '') + fmtShort(totalPnl);
-  pnlEl.className = 'val ' + (totalPnl >= 0 ? 'pos' : 'neg');
-  const pctEl = document.getElementById('a-pct');
-  pctEl.textContent = (totalPct >= 0 ? '+' : '') + totalPct.toFixed(1) + '%';
-  pctEl.className = 'val ' + (totalPct >= 0 ? 'pos' : 'neg');
-
-  const byJenis = {};
-  data.forEach(a => { const v = a.lot * (a.multiplier || 1) * a.hargaSkrg; byJenis[a.jenis] = (byJenis[a.jenis] || 0) + v; });
-  const total = Object.values(byJenis).reduce((s, v) => s + v, 0);
-  const COLORS = { saham: '#2563eb', saham_us: '#6d28d9', reksadana: '#1D9E75', emas: '#b45309', kripto: '#6d28d9', lainnya: '#6b7280' };
-  document.getElementById('a-alokasi').innerHTML = Object.entries(byJenis).sort((a, b) => b[1] - a[1]).map(([j, v]) =>
-    `<div class="bar-row">
-      <div class="bar-label">${LABEL[j] || j}</div>
-      <div class="bar-bg"><div class="bar-fill" style="width:${Math.round(v / total * 100)}%;background:${COLORS[j]}"></div></div>
-      <div class="bar-val">${((v / total) * 100).toFixed(1)}% · ${fmtShort(v)}</div>
-    </div>`
-  ).join('');
-}
 
   const totalPnl=totalNilai-totalModal;
   const totalPct=totalModal>0?((totalPnl/totalModal)*100):0;
@@ -554,10 +465,9 @@ async function simpanAset(){
   }
 
   const multiplier=jenis==='saham'?100:1;
- try{
+  try{
     await fetch(`${API}/api/aset`,{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({nama,kode,jenis,lot,hargaBeli,hargaSkrg:hargaSkrg||hargaBeli,multiplier,tanggal,updatedAt:new Date()})});
-    
     document.getElementById('a-nama').value='';
     document.getElementById('a-kode').value='';
     document.getElementById('a-lot').value='';
