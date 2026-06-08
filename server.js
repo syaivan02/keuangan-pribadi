@@ -24,7 +24,7 @@ const transaksiSchema = new mongoose.Schema({
 const asetSchema = new mongoose.Schema({
   nama: { type: String, required: true },
   kode: String,
-  jenis: { type: String, enum: ['saham', 'reksadana', 'emas', 'kripto', 'lainnya'] },
+  jenis: { type: String, enum: ['saham', 'saham_us', 'reksadana', 'emas', 'kripto', 'lainnya'] },
   lot: Number,
   hargaBeli: Number,
   hargaSkrg: Number,
