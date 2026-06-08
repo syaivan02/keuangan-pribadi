@@ -432,6 +432,7 @@ function renderAset(data){
 
   const totalPnl=totalNilai-totalModal;
   const totalPct=totalModal>0?((totalPnl/totalModal)*100):0;
+  document.getElementById('a-modal').textContent=fmtShort(totalModal);
   document.getElementById('a-total').textContent=fmtShort(totalNilai);
   const pnlEl=document.getElementById('a-pnl');
   pnlEl.textContent=(totalPnl>=0?'+':'')+fmtShort(totalPnl);
