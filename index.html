@@ -385,11 +385,14 @@ async function hapusTx(id){
 }
 
 async function loadAset(){
-  try{
+ try{
     const res=await fetch(`${API}/api/aset`);
     const data=await res.json();
+    console.log('Data aset:', JSON.stringify(data, null, 2));
     renderAset(data);
-  }catch(e){document.getElementById('a-tbody').innerHTML='<tr><td colspan="8" class="empty">Gagal memuat data.</td></tr>'}
+  }catch(e){
+    console.error('Error loadAset:', e);
+    document.getElementById('a-tbody').innerHTML='<tr><td colspan="8" class="empty">Gagal memuat data.</td></tr>'
 }
 
 function renderAset(data){
