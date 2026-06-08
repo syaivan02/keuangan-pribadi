@@ -457,9 +457,10 @@ async function simpanAset(){
 
   if(!nama||!lot||!hargaBeli){showToast('Isi nama, jumlah, dan harga beli ya!');return}
 
-  // KONVERSI DOLAR KE RUPIAH KHUSUS SAHAM AS
-  if (jenis === 'saham_us') {
-    const kurs = parseFloat(document.getElementById('a-kurs').value) || 16000;
+ if (jenis === 'saham_us') {
+    document.getElementById('box-kurs').style.display = 'block';
+    const kursEl = document.getElementById('a-kurs');
+    const kurs = kursEl && parseFloat(kursEl.value) > 0 ? parseFloat(kursEl.value) : 16000;
     hargaBeli = hargaBeli * kurs;
     hargaSkrg = hargaSkrg * kurs;
   }
