@@ -402,9 +402,10 @@ function renderAset(data){
     document.getElementById('a-alokasi').innerHTML='<div class="empty">Belum ada data.</div>';
     return;
   }
-  let totalModal=0,totalNilai=0;
+ let totalModal=0,totalNilai=0;
   tbody.innerHTML=data.map(a=>{
-    const mult=a.multiplier||1;
+    // PAKSA MULTIPLIER 1 KHUSUS SAHAM AS AGAR HITUNGANNYA TIDAK ERROR ATAU KOSONG
+    const mult = a.jenis === 'saham' ? 100 : 1; 
     const modal=a.lot*mult*a.hargaBeli;
     const nilai=a.lot*mult*a.hargaSkrg;
     const pnl=nilai-modal;
