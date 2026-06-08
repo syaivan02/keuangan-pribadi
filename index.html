@@ -402,7 +402,7 @@ function renderAset(data){
   const tbody=document.getElementById('a-tbody');
   if(!data.length){
     tbody.innerHTML='<tr><td colspan="8" class="empty">Belum ada aset. Tambahkan di atas.</td></tr>';
-    document.getElementById('a-modal').textContent=fmtShort(totalModal);
+    document.getElementById('a-modal').textContent='Rp 0';
     document.getElementById('a-total').textContent='Rp 0';
     document.getElementById('a-pnl').textContent='Rp 0';
     document.getElementById('a-pct').textContent='0%';
