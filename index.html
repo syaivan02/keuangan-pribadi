@@ -473,9 +473,12 @@ async function simpanAset(){
     document.getElementById('a-lot').value='';
     document.getElementById('a-hbeli').value='';
     document.getElementById('a-hskrg').value='';
-    showToast('Aset disimpan!');
-    loadAset();
-  }catch(e){showToast('Gagal menyimpan.')}
+  showToast('Aset disimpan!');
+    await loadAset();
+  } catch(e) {
+    console.error('Error simpan aset:', e);
+    showToast('Gagal menyimpan.');
+  }
 }
 
 async function hapusAset(id){
