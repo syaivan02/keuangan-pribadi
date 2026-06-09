@@ -33,7 +33,23 @@ const asetSchema = new mongoose.Schema({
   tanggal: Date,
   updatedAt: Date,
 }, { timestamps: true });
+const rekeningSchema = new mongoose.Schema({
+  nama: { type: String, required: true },
+  bank: { type: String, required: true },
+  saldo: { type: Number, default: 0 },
+  warna: { type: String, default: '#2563eb' },
+}, { timestamps: true });
 
+const mutasiSchema = new mongoose.Schema({
+  rekeningId: { type: mongoose.Schema.Types.ObjectId, ref: 'Rekening', required: true },
+  type: { type: String, enum: ['masuk', 'keluar'], required: true },
+  jumlah: { type: Number, required: true },
+  keterangan: String,
+  tanggal: { type: Date, default: Date.now },
+}, { timestamps: true });
+
+const Rekening = mongoose.model('Rekening', rekeningSchema);
+const Mutasi = mongoose.model('Mutasi', mutasiSchema);
 const Transaksi = mongoose.model('Transaksi', transaksiSchema);
 const Aset = mongoose.model('Aset', asetSchema);
 
@@ -146,6 +162,64 @@ app.get('/api/transaksi', async (req, res) => {
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
+});
+// GET semua rekening
+app.get('/api/rekening', async (req, res) => {
+  try {
+    const data = await Rekening.find().sort({ createdAt: 1 });
+    res.json(data);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// POST tambah rekening
+app.post('/api/rekening', async (req, res) => {
+  try {
+    const rek = new Rekening(req.body);
+    await rek.save();
+    res.json(rek);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// DELETE rekening
+app.delete('/api/rekening/:id', async (req, res) => {
+  try {
+    await Rekening.findByIdAndDelete(req.params.id);
+    await Mutasi.deleteMany({ rekeningId: req.params.id });
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// GET mutasi per rekening
+app.get('/api/mutasi/:rekeningId', async (req, res) => {
+  try {
+    const data = await Mutasi.find({ rekeningId: req.params.rekeningId }).sort({ tanggal: -1 }).limit(20);
+    res.json(data);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// POST mutasi (setor/tarik)
+app.post('/api/mutasi', async (req, res) => {
+  try {
+    const { rekeningId, type, jumlah, keterangan, tanggal } = req.body;
+    const mutasi = new Mutasi({ rekeningId, type, jumlah, keterangan, tanggal });
+    await mutasi.save();
+    // Update saldo rekening
+    const delta = type === 'masuk' ? jumlah : -jumlah;
+    await Rekening.findByIdAndUpdate(rekeningId, { $inc: { saldo: delta } });
+    res.json(mutasi);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// DELETE mutasi
+app.delete('/api/mutasi/:id', async (req, res) => {
+  try {
+    const mutasi = await Mutasi.findById(req.params.id);
+    if (!mutasi) return res.status(404).json({ error: 'Tidak ditemukan' });
+    const delta = mutasi.type === 'masuk' ? -mutasi.jumlah : mutasi.jumlah;
+    await Rekening.findByIdAndUpdate(mutasi.rekeningId, { $inc: { saldo: delta } });
+    await Mutasi.findByIdAndDelete(req.params.id);
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 app.post('/api/transaksi', async (req, res) => {
