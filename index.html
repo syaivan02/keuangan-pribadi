@@ -134,6 +134,7 @@ tr:hover td{background:var(--bg)}
     <div class="nav-item active" onclick="showPage('dashboard')"><i class="ti ti-home"></i><span>Dashboard</span></div>
     <div class="nav-item" onclick="showPage('transaksi')"><i class="ti ti-arrows-exchange"></i><span>Transaksi</span></div>
     <div class="nav-item" onclick="showPage('aset')"><i class="ti ti-briefcase"></i><span>Portofolio</span></div>
+    <div class="nav-item" onclick="showPage('tabungan')"><i class="ti ti-building-bank"></i><span>Tabungan</span></div>
   </nav>
   <div class="sidebar-footer">v1.0 · Duit Ivan</div>
 </div>
@@ -267,7 +268,36 @@ tr:hover td{background:var(--bg)}
   </div>
 
 </div>
+<!-- TABUNGAN -->
+<div class="page" id="page-tabungan">
+  <div class="page-title">Kas & Tabungan</div>
+  <div class="page-sub">Saldo rekening bank dan kas tunai</div>
 
+  <div class="grid-3" style="margin-bottom:1.5rem">
+    <div class="metric"><div class="lbl">Total Saldo</div><div class="val" id="tab-total">-</div></div>
+    <div class="metric"><div class="lbl">Total Masuk</div><div class="val pos" id="tab-in">-</div></div>
+    <div class="metric"><div class="lbl">Total Keluar</div><div class="val neg" id="tab-out">-</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><i class="ti ti-plus"></i> Tambah Rekening</div>
+    <div class="form-row c3">
+      <div><label>Nama Rekening</label><input id="rek-nama" placeholder="Mis: Tabungan BRI"></div>
+      <div><label>Bank</label>
+        <select id="rek-bank">
+          <option value="BRI">BRI</option>
+          <option value="Mandiri">Mandiri</option>
+          <option value="BLU BCA">BLU BCA</option>
+          <option value="Lainnya">Lainnya</option>
+        </select>
+      </div>
+      <div><label>Saldo Awal (Rp)</label><input id="rek-saldo" type="number" min="0" placeholder="0"></div>
+    </div>
+    <button class="btn btn-primary btn-block" onclick="simpanRekening()"><i class="ti ti-plus"></i> Simpan Rekening</button>
+  </div>
+
+  <div id="rek-list"><div class="loading">Memuat...</div></div>
+</div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -294,6 +324,7 @@ function showPage(p){
   document.querySelectorAll('.nav-item')[['dashboard','transaksi','aset'].indexOf(p)].classList.add('active');
   if(p==='transaksi')loadTransaksi();
   if(p==='aset')loadAset();
+  if(p==='tabungan')loadTabungan();
   if(p==='dashboard')loadDashboard();
 }
 
@@ -584,6 +615,111 @@ async function loadDashboard(){
       }).join('')
       :'<div class="empty">Belum ada transaksi bulan ini.</div>';
   }catch(e){console.error(e)}}
+let activeRekening = null;
+
+async function loadTabungan(){
+  try {
+    const res = await fetch(`${API}/api/rekening`);
+    const data = await res.json();
+    renderTabungan(data);
+  } catch(e) {
+    document.getElementById('rek-list').innerHTML='<div class="empty">Gagal memuat data.</div>';
+  }
+}
+
+function renderTabungan(data){
+  const BANK_COLOR = {'BRI':'#003f88','Mandiri':'#0a6640','BLU BCA':'#005f99','Lainnya':'#6b7280'};
+  const totalSaldo = data.reduce((s,r)=>s+r.saldo,0);
+  document.getElementById('tab-total').textContent = fmtShort(totalSaldo);
+  document.getElementById('tab-in').textContent = '-';
+  document.getElementById('tab-out').textContent = '-';
+
+  if(!data.length){
+    document.getElementById('rek-list').innerHTML='<div class="card"><div class="empty">Belum ada rekening. Tambahkan di atas.</div></div>';
+    return;
+  }
+
+  document.getElementById('rek-list').innerHTML = data.map(r=>`
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="width:40px;height:40px;border-radius:10px;background:${BANK_COLOR[r.bank]||'#6b7280'};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:12px;font-family:'Syne',sans-serif">${r.bank.substring(0,3).toUpperCase()}</div>
+          <div>
+            <div style="font-weight:700;font-size:15px">${r.nama}</div>
+            <div style="font-size:12px;color:var(--muted)">${r.bank}</div>
+          </div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:20px;font-weight:700;font-family:'Syne',sans-serif">${fmtShort(r.saldo)}</div>
+          <button class="btn-del" onclick="hapusRekening('${r._id}')"><i class="ti ti-trash"></i></button>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;margin-bottom:1rem">
+        <button class="btn btn-primary btn-sm" onclick="showMutasi('${r._id}','masuk','${r.nama}')"><i class="ti ti-arrow-down"></i> Setor</button>
+        <button class="btn btn-outline btn-sm" onclick="showMutasi('${r._id}','keluar','${r.nama}')"><i class="ti ti-arrow-up"></i> Tarik</button>
+        <button class="btn btn-outline btn-sm" onclick="loadMutasi('${r._id}')"><i class="ti ti-list"></i> Riwayat</button>
+      </div>
+      <div id="mutasi-${r._id}"></div>
+    </div>
+  `).join('');
+}
+
+async function simpanRekening(){
+  const nama = document.getElementById('rek-nama').value.trim();
+  const bank = document.getElementById('rek-bank').value;
+  const saldo = parseFloat(document.getElementById('rek-saldo').value) || 0;
+  if(!nama){showToast('Isi nama rekening ya!');return}
+  await fetch(`${API}/api/rekening`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nama,bank,saldo})});
+  document.getElementById('rek-nama').value='';
+  document.getElementById('rek-saldo').value='';
+  showToast('Rekening disimpan!');
+  loadTabungan();
+}
+
+async function hapusRekening(id){
+  if(!confirm('Hapus rekening ini? Semua mutasi akan ikut terhapus.'))return;
+  await fetch(`${API}/api/rekening/${id}`,{method:'DELETE'});
+  showToast('Rekening dihapus.');
+  loadTabungan();
+}
+
+async function showMutasi(rekeningId, type, nama){
+  const jumlah = parseFloat(prompt(`${type==='masuk'?'Setor ke':'Tarik dari'} ${nama}\n\nJumlah (Rp):`));
+  if(!jumlah||isNaN(jumlah))return;
+  const keterangan = prompt('Keterangan (opsional):') || '';
+  const tanggal = new Date().toISOString();
+  await fetch(`${API}/api/mutasi`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({rekeningId,type,jumlah,keterangan,tanggal})});
+  showToast(type==='masuk'?'Setoran dicatat!':'Penarikan dicatat!');
+  loadTabungan();
+}
+
+async function loadMutasi(rekeningId){
+  const el = document.getElementById(`mutasi-${rekeningId}`);
+  el.innerHTML = '<div class="loading">Memuat riwayat...</div>';
+  const res = await fetch(`${API}/api/mutasi/${rekeningId}`);
+  const data = await res.json();
+  if(!data.length){el.innerHTML='<div class="empty">Belum ada mutasi.</div>';return}
+  el.innerHTML=`<table>
+    <thead><tr><th>Keterangan</th><th>Tanggal</th><th>Jumlah</th><th></th></tr></thead>
+    <tbody>${data.map(m=>{
+      const tgl=new Date(m.tanggal).toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'});
+      return `<tr>
+        <td>${m.keterangan||'-'}</td>
+        <td style="color:var(--muted)">${tgl}</td>
+        <td class="${m.type==='masuk'?'pnl-pos':'pnl-neg'}">${m.type==='masuk'?'+':'-'}${fmtShort(m.jumlah)}</td>
+        <td><button class="btn-del" onclick="hapusMutasi('${m._id}','${rekeningId}')"><i class="ti ti-trash"></i></button></td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table>`;
+}
+
+async function hapusMutasi(id, rekeningId){
+  if(!confirm('Hapus mutasi ini?'))return;
+  await fetch(`${API}/api/mutasi/${id}`,{method:'DELETE'});
+  showToast('Mutasi dihapus.');
+  loadTabungan();
+  loadMutasi(rekeningId);
+}
 </script>
 </body>
 </html>
