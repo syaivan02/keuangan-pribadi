@@ -426,7 +426,10 @@ function renderAset(data){
       <td>${fmtShort(a.hargaSkrg)}<br><span style="font-size:10px;color:var(--hint)">${upd}</span></td>
       <td><strong style="font-weight:600">${fmtShort(nilai)}</strong></td>
       <td class="${pnl>=0?'pnl-pos':'pnl-neg'}">${pnl>=0?'+':''}${pct.toFixed(1)}%<br><span style="font-size:11px">${pnl>=0?'+':''}${fmtShort(pnl)}</span></td>
-      <td><button class="btn-del" onclick="hapusAset('${a._id}')"><i class="ti ti-trash"></i></button></td>
+     <td style="display:flex;gap:4px">
+  <button class="btn-edit" onclick="topUpAset('${a._id}','${a.nama}',${a.lot},${a.hargaBeli})" title="Top Up"><i class="ti ti-plus"></i></button>
+  <button class="btn-del" onclick="hapusAset('${a._id}')"><i class="ti ti-trash"></i></button>
+</td>
     </tr>`;
   }).join('');
 
@@ -494,6 +497,28 @@ async function hapusAset(id){
   if(!confirm('Hapus aset ini?'))return;
   await fetch(`${API}/api/aset/${id}`,{method:'DELETE'});
   showToast('Aset dihapus.');
+  loadAset();
+}
+async function topUpAset(id, nama, lotLama, hargaBeliLama){
+  const lotBaru = parseFloat(prompt(`Top Up: ${nama}\n\nBerapa lot/unit/lembar yang dibeli?`));
+  if(!lotBaru || isNaN(lotBaru)) return;
+  const hargaBaru = parseFloat(prompt(`Harga beli per unit/lembar/lot (Rp):`));
+  if(!hargaBaru || isNaN(hargaBaru)) return;
+
+  // Hitung average
+  const totalLot = lotLama + lotBaru;
+  const hargaAvg = ((lotLama * hargaBeliLama) + (lotBaru * hargaBaru)) / totalLot;
+
+  await fetch(`${API}/api/aset/${id}`, {
+    method: 'PATCH',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      lot: totalLot,
+      hargaBeli: Math.round(hargaAvg),
+      updatedAt: new Date()
+    })
+  });
+  showToast(`${nama} berhasil di-top up! Avg: ${fmt(hargaAvg)}`);
   loadAset();
 }
 
