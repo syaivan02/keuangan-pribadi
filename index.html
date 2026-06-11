@@ -268,36 +268,38 @@ tr:hover td{background:var(--bg)}
   </div>
 
 </div>
-<!-- TABUNGAN -->
+</div> <!-- penutup page-aset -->
+
+  <!-- TABUNGAN -->
   <div class="page" id="page-tabungan">
-  <div class="page-title">Kas & Tabungan</div>
-  <div class="page-sub">Saldo rekening bank dan kas tunai</div>
-
-  <div class="grid-3" style="margin-bottom:1.5rem">
-    <div class="metric"><div class="lbl">Total Saldo</div><div class="val" id="tab-total">-</div></div>
-    <div class="metric"><div class="lbl">Total Masuk</div><div class="val pos" id="tab-in">-</div></div>
-    <div class="metric"><div class="lbl">Total Keluar</div><div class="val neg" id="tab-out">-</div></div>
-  </div>
-
-  <div class="card">
-    <div class="card-title"><i class="ti ti-plus"></i> Tambah Rekening</div>
-    <div class="form-row c3">
-      <div><label>Nama Rekening</label><input id="rek-nama" placeholder="Mis: Tabungan BRI"></div>
-      <div><label>Bank</label>
-        <select id="rek-bank">
-          <option value="BRI">BRI</option>
-          <option value="Mandiri">Mandiri</option>
-          <option value="BLU BCA">BLU BCA</option>
-          <option value="Lainnya">Lainnya</option>
-        </select>
-      </div>
-      <div><label>Saldo Awal (Rp)</label><input id="rek-saldo" type="number" min="0" placeholder="0"></div>
+    <div class="page-title">Kas & Tabungan</div>
+    <div class="page-sub">Saldo rekening bank dan kas tunai</div>
+    <div class="grid-3" style="margin-bottom:1.5rem">
+      <div class="metric"><div class="lbl">Total Saldo</div><div class="val" id="tab-total">-</div></div>
+      <div class="metric"><div class="lbl">Total Masuk</div><div class="val pos" id="tab-in">-</div></div>
+      <div class="metric"><div class="lbl">Total Keluar</div><div class="val neg" id="tab-out">-</div></div>
     </div>
-    <button class="btn btn-primary btn-block" onclick="simpanRekening()"><i class="ti ti-plus"></i> Simpan Rekening</button>
+    <div class="card">
+      <div class="card-title"><i class="ti ti-plus"></i> Tambah Rekening</div>
+      <div class="form-row c3">
+        <div><label>Nama Rekening</label><input id="rek-nama" placeholder="Mis: Tabungan BRI"></div>
+        <div><label>Bank</label>
+          <select id="rek-bank">
+            <option value="BRI">BRI</option>
+            <option value="Mandiri">Mandiri</option>
+            <option value="BLU BCA">BLU BCA</option>
+            <option value="Lainnya">Lainnya</option>
+          </select>
+        </div>
+        <div><label>Saldo Awal (Rp)</label><input id="rek-saldo" type="number" min="0" placeholder="0"></div>
+      </div>
+      <button class="btn btn-primary btn-block" onclick="simpanRekening()"><i class="ti ti-plus"></i> Simpan Rekening</button>
+    </div>
+    <div id="rek-list"><div class="loading">Memuat...</div></div>
   </div>
 
-  <div id="rek-list"><div class="loading">Memuat...</div></div>
-</div>
+</div> <!-- penutup div.main -->
+
 <div class="toast" id="toast"></div>
 
 <script>
