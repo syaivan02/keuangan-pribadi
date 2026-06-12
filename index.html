@@ -41,6 +41,7 @@ h1,h2,h3{font-family:'Syne',sans-serif}
 
 .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem}
 .grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem}
+.grid-5{display:grid;grid-template-columns:repeat(5,1fr);gap:1rem;margin-bottom:1.5rem}
 .grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem}
 .metric{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem 1.5rem}
 .metric .lbl{font-size:12px;color:var(--muted);margin-bottom:.5rem;font-weight:500;text-transform:uppercase;letter-spacing:.5px}
@@ -121,7 +122,7 @@ tr:hover td{background:var(--bg)}
   .logo,.nav-item span,.sidebar-footer{display:none}
   .nav-item{justify-content:center}
   .main{margin-left:60px;padding:1rem}
-  .grid-3, .grid-4{grid-template-columns:1fr}
+  .grid-3, .grid-4, .grid-5{grid-template-columns:1fr}
   .form-row.c3,.form-row.c4{grid-template-columns:1fr 1fr}
 }
 </style>
@@ -145,8 +146,9 @@ tr:hover td{background:var(--bg)}
   <div class="page active" id="page-dashboard">
     <div class="page-title">Dashboard</div>
     <div class="page-sub" id="dash-bulan">Memuat data...</div>
-   <div class="grid-4">
+   <div class="grid-5">
       <div class="metric"><div class="lbl">Total Aset</div><div class="val" id="d-total-aset">-</div><div class="sub">Semua portofolio</div></div>
+      <div class="metric"><div class="lbl">Total Tabungan</div><div class="val" id="d-total-tabungan">-</div><div class="sub">Kas & rekening</div></div>
       <div class="metric"><div class="lbl">Pemasukan Bulan Ini</div><div class="val pos" id="d-in">-</div></div>
       <div class="metric"><div class="lbl">Pengeluaran Bulan Ini</div><div class="val neg" id="d-out">-</div></div>
       <div class="metric"><div class="lbl">Sisa Saldo Bulan Ini</div><div class="val" id="d-net">-</div></div>
@@ -571,12 +573,14 @@ async function loadDashboard(){
   const now=new Date();
   document.getElementById('dash-bulan').textContent=MONTHS[now.getMonth()]+' '+now.getFullYear();
   try{
-    const [txRes,asetRes]=await Promise.all([
+    const [txRes,asetRes,rekRes]=await Promise.all([
       fetch(`${API}/api/transaksi?bulan=${now.getMonth()+1}&tahun=${now.getFullYear()}`),
-      fetch(`${API}/api/aset`)
+      fetch(`${API}/api/aset`),
+      fetch(`${API}/api/rekening`)
     ]);
     const txData=await txRes.json();
     const asetData=await asetRes.json();
+    const rekData=await rekRes.json();
 
     const sumIn=txData.filter(t=>t.type==='in').reduce((s,t)=>s+t.jumlah,0);
     const sumOut=txData.filter(t=>t.type==='out').reduce((s,t)=>s+t.jumlah,0);
@@ -586,6 +590,8 @@ async function loadDashboard(){
     const netSaldo = sumIn - sumOut;
 
     document.getElementById('d-total-aset').textContent=fmtShort(totalAset);
+    const totalTabungan=rekData.reduce((s,r)=>s+r.saldo,0);
+    document.getElementById('d-total-tabungan').textContent=fmtShort(totalTabungan);
     document.getElementById('d-in').textContent=fmtShort(sumIn);
     document.getElementById('d-out').textContent=fmtShort(sumOut);
 
